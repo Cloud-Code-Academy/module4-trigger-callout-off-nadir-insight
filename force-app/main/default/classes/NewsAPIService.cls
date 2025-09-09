@@ -21,10 +21,19 @@ public with sharing class NewsAPIService {
         // - Build the request URL with fixed page size
         // - Make the callout
         // - Parse and return the response
+        // GET https://newsapi.org/v2/top-headlines?country=us&apiKey=4c37a01724a2414eb4ed0062888d1148
+
+        String categoryParameter = category == null ? '' : '&category=' + category;
+        String pageParameter = page == null ? '?page=' + PAGE_SIZE : '?page=' + page;
+        String endpointUrl = API_NAMED_CREDENTIAL + API_ENDPOINT + pageParameter + categoryParameter;
+        HttpResponse response = HttpUtilities.makeCallout('GET', endpointUrl);
         
-        return null;
+        NewsAPIResponse newsAPIResponse = parseResponse(response.getBody());
+        return newsAPIResponse;
+        // return response.getBody();
     }
     
+    // duplicative of utility class
     /**
      * Helper method to make the HTTP callout
      * @param endpoint The full URL with parameters
@@ -45,11 +54,15 @@ public with sharing class NewsAPIService {
      * @return NewsAPIResponse The parsed response object
      */
     private static NewsAPIResponse parseResponse(String jsonResponse) {
-        // TODO: Implement JSON parsing
-        // - Deserialize JSON to NewsAPIResponse
-        // - Handle exceptions
-        
-        return null;
+        if (String.isBlank(jsonResponse)) {
+            throw new IllegalArgumentException('JSON response cannot be null or empty.');
+        }
+        try {
+            return (NewsAPIResponse) JSON.deserialize(jsonResponse, NewsAPIResponse.class);
+        } catch (JSONException ex) {
+            System.debug('JSON parsing error: ' + ex.getMessage());
+            throw new NewsAPIException('Error parsing JSON response: ' + ex.getMessage());
+        }
     }
     
     /**
